@@ -1,26 +1,58 @@
 #/bin/bash
 
-folder=$1
-days=$2
+# folder=$1
+# days=$2
+# limit=$3
 
-echo `find "$folder" -mtime -$days -type f \( -name "*.mkv" -o -name "*.mp4" -not -name "*-mm.mp4" \)`
-find "$folder" -mtime -$days -type f \( -name "*.mkv" -o -name "*.mp4" -not -name "*-mm.mp4" \) |while read fname; do
-  echo $fname
+folder=${folder:-.}
+days=${days:-7}
+limit=${limit:-true}
+
+while [ $# -gt 0 ]; do
+   if [[ $1 == *"--"* ]]; then
+        param="${1/--/}"
+        declare $param="$2"
+        # echo $1 $2 // Optional to see the parameter:value result
+   fi
+  shift
+done
+
+echo $folder
+echo $days
+echo $limit
+
+# convert mkv to mp4 first
+echo `find "$folder" -mtime -$days -type f \( -name "*.mkv" \) | head -10`
+find "$folder" -mtime -$days -type f \( -name "*.mkv" \) | head -10 |while read fname; do
+  echo converting $fname from mkv to mp4
+  ffmpeg_cmd="ffmpeg -hide_banner -v error -nostdin -y -i \"$fname\" -vcodec copy -acodec copy \"${fname%.*}.mp4\""
+  eval $ffmpeg_cmd
+  # delete original *gulp*
+  # rm "$fname"
+done
+
+echo `find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \)`
+find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \) |while read fname; do
+  echo converting $fname codecs
   file_json=`mediainfo --output=JSON "$fname"`
 
   # check channels
   stereo_audio=`echo $file_json | jq '.[].track[] | select(."@type" == "Audio") | .Channels | contains("2")'`
+  echo stereo: $stereo_audio
 
   # check for subtitles
   subs_channel=`echo $file_json | jq '.[].track[] | select(."@type" == "Text") | select(.Title | contains("English")) | .ID|tonumber'`
-  subs_channel=$(($subs_channel-1))
+  if [ -n "$var" ]; then
+    subs_channel=$(($subs_channel-1))
+fi
 
-  # base ffmpeg command  
+  # base ffmpeg command
   ffmpeg_cmd="ffmpeg -hide_banner -v error -nostdin -y -i \"$fname\" -vcodec copy -c:a aac "
 
   # if not stereo, convert to stereo
   if [[ $stereo_audio != 'true' ]]
   then
+    echo 'converting audio to stereo for' $fname
     ffmpeg_cmd="$ffmpeg_cmd -vol 200 -af \"pan=stereo|FL=0.8*FC+0.707*FL+0.707*BL+0.5*LFE|FR=0.8*FC+0.707*FR+0.707*BR+0.5*LFE\" "
   fi
 
@@ -40,5 +72,8 @@ find "$folder" -mtime -$days -type f \( -name "*.mkv" -o -name "*.mp4" -not -nam
   echo $ret_code
 
   # delete original *gulp*
+  echo rm "$fname"
   rm "$fname"
+
+  rename 's/-mm//' *.mp4
 done
