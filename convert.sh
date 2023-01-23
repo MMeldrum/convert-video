@@ -6,7 +6,7 @@
 
 folder=${folder:-.}
 days=${days:-7}
-limit=${limit:-true}
+limit=${limit:-99999}
 
 while [ $# -gt 0 ]; do
    if [[ $1 == *"--"* ]]; then
@@ -17,22 +17,22 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-echo $folder
-echo $days
-echo $limit
+echo Scanning $folder
+echo Files from the last $days days
+echo Process $limit files only
 
 # convert mkv to mp4 first
-echo `find "$folder" -mtime -$days -type f \( -name "*.mkv" \) | head -10`
-find "$folder" -mtime -$days -type f \( -name "*.mkv" \) | head -10 |while read fname; do
+echo find "$folder" -mtime -$days -type f \( -name "*.mkv" \) \| head -n $limit
+find "$folder" -mtime -$days -type f \( -name "*.mkv" \) | head -n $limit |while read fname; do
   echo converting $fname from mkv to mp4
   ffmpeg_cmd="ffmpeg -hide_banner -v error -nostdin -y -i \"$fname\" -vcodec copy -acodec copy \"${fname%.*}.mp4\""
   eval $ffmpeg_cmd
   # delete original *gulp*
-  # rm "$fname"
+  rm "$fname"
 done
 
-echo `find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \)`
-find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \) |while read fname; do
+echo find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \) \| head -n $limit
+find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \) | head -n $limit |while read fname; do
   echo converting $fname codecs
   file_json=`mediainfo --output=JSON "$fname"`
 
@@ -75,5 +75,6 @@ fi
   echo rm "$fname"
   rm "$fname"
 
+  echo rename 's/-mm//' *.mp4
   rename 's/-mm//' *.mp4
 done
