@@ -31,20 +31,20 @@ find "$folder" -mtime -$days -type f \( -name "*.mkv" \) | head -n $limit |while
   rm "$fname"
 done
 
-echo find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \) \| head -n $limit
-find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-mm.mp4" \) | head -n $limit |while read fname; do
+echo find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) \| head -n $limit
+find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) | head -n $limit |while read fname; do
   echo converting $fname codecs
   file_json=`mediainfo --output=JSON "$fname"`
 
   # check channels
   stereo_audio=`echo $file_json | jq '.[].track[] | select(."@type" == "Audio") | .Channels | contains("2")'`
-  echo stereo: $stereo_audio
+  echo stereo_audio: $stereo_audio
 
   # check for subtitles
   subs_channel=`echo $file_json | jq '.[].track[] | select(."@type" == "Text") | select(.Title | contains("English")) | .ID|tonumber'`
   if [ -n "$var" ]; then
     subs_channel=$(($subs_channel-1))
-fi
+  fi
 
   # base ffmpeg command
   ffmpeg_cmd="ffmpeg -hide_banner -v error -nostdin -y -i \"$fname\" -vcodec copy -c:a aac "
@@ -59,22 +59,35 @@ fi
   # TODO if found, extract subtitles
   # if [[ -n $subs_channel ]]
   # then
-  #   ffmpeg_cmd="$ffmpeg_cmd -map \"0:s:m:language:eng\" \"${fname%.*}-mm.srt\""
+  #   ffmpeg_cmd="$ffmpeg_cmd -map \"0:s:m:language:eng\" \"${fname%.*}-tmp.srt\""
   # fi
 
-  ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-mm.mp4\""
-  echo $ffmpeg_cmd
+    # if conversion required then do the deed!
+  if [[ $stereo_audio != 'true' ]]; then
 
-  # do the deed!
-  eval $ffmpeg_cmd
+    ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp.mp4\""
+    echo $ffmpeg_cmd
 
-  ret_code=$?
-  echo $ret_code
+    eval $ffmpeg_cmd
 
-  # delete original *gulp*
-  echo rm "$fname"
-  rm "$fname"
+    ret_code=$?
+    echo $ret_code
 
-  echo rename 's/-mm//' *.mp4
-  rename 's/-mm//' *.mp4
+    # delete original *gulp*
+    echo rm \"$fname\"
+    rm "$fname"
+
+    renamepath=$(dirname "$fname")
+    # echo renamepath $renamepath
+    # echo \"renamepath\" \"$renamepath\"/*.mp4
+    # ls "$renamepath"/*.mp4
+
+    # echo \"${fname%.*}-tmp.mp4\"
+    rename -v 's/-tmp/-2ch/' "${fname%.*}-tmp.mp4"
+  else
+    echo Skipping conversion - already stereo audio
+    echo renaming \"$fname\"
+    rename -v 's/-tmp//' "$fname"
+    rename -v 's/.mp4/-2ch.mp4/' "$fname"
+  fi
 done
