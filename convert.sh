@@ -64,8 +64,9 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
 
     # if conversion required then do the deed!
   if [[ $stereo_audio != 'true' ]]; then
-
-    ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp.mp4\""
+    
+    ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp
+    .mp4\""
     echo $ffmpeg_cmd
 
     eval $ffmpeg_cmd
@@ -91,3 +92,13 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
     rename -v 's/.mp4/-2ch.mp4/' "$fname"
   fi
 done
+
+# <Location id="1" path="/media/plex/Films"/>
+# <Location id="2" path="/media/plex/Kids Films"/>
+# <Location id="3" path="/media/plex/TV"/>
+# <Location id="4" path="/media/plex/Kids TV"/>
+
+# Refresh Plex Library - Partial Scan 
+echo Scanning Plex folder $folder
+echo curl http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
+curl http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
