@@ -65,11 +65,8 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
     # if conversion required then do the deed!
   if [[ $stereo_audio != 'true' ]]; then
     
-    ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp
-    .mp4\""
+    ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp.mp4\""
     echo $ffmpeg_cmd
-
-    eval $ffmpeg_cmd
 
     ret_code=$?
     echo $ret_code
