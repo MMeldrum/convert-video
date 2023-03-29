@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # folder=$1
 # days=$2
@@ -67,20 +67,24 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
     
     ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp.mp4\""
     echo $ffmpeg_cmd
+    eval $ffmpeg_cmd
 
     ret_code=$?
     echo $ret_code
 
     # delete original *gulp*
-    echo rm \"$fname\"
-    rm "$fname"
+    # echo rm \"$fname\"
+    rm \"$fname\"
+    # echo mv "$fname" "$fname.orig"
+    # mv "$fname" "$fname.orig"
 
     renamepath=$(dirname "$fname")
-    # echo renamepath $renamepath
-    # echo \"renamepath\" \"$renamepath\"/*.mp4
+    echo renamepath $renamepath
+    echo \"renamepath\" \"$renamepath\"/*.mp4
+    ls "$renamepath"
     # ls "$renamepath"/*.mp4
 
-    # echo \"${fname%.*}-tmp.mp4\"
+    echo \"${fname%.*}-tmp.mp4\"
     rename -v 's/-tmp/-2ch/' "${fname%.*}-tmp.mp4"
   else
     echo Skipping conversion - already stereo audio
@@ -97,5 +101,5 @@ done
 
 # Refresh Plex Library - Partial Scan 
 echo Scanning Plex folder $folder
-echo curl http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
-curl http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
+echo curl -s http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
+curl -s http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
