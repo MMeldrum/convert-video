@@ -64,7 +64,7 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
 
     # if conversion required then do the deed!
   if [[ $stereo_audio != 'true' ]]; then
-    
+
     ffmpeg_cmd="$ffmpeg_cmd \"${fname%.*}-tmp.mp4\""
     echo $ffmpeg_cmd
     eval $ffmpeg_cmd
@@ -74,7 +74,7 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
 
     # delete original *gulp*
     # echo rm \"$fname\"
-    rm \"$fname\"
+    rm "$fname"
     # echo mv "$fname" "$fname.orig"
     # mv "$fname" "$fname.orig"
 
@@ -94,12 +94,25 @@ find "$folder" -mtime -$days -type f \( -name "*.mp4" -not -name "*-2ch.mp4" \) 
   fi
 done
 
-# <Location id="1" path="/media/plex/Films"/>
-# <Location id="2" path="/media/plex/Kids Films"/>
-# <Location id="3" path="/media/plex/TV"/>
-# <Location id="4" path="/media/plex/Kids TV"/>
+# <Location id="1" path="/media/plex/Library1"/>
+# <Location id="2" path="/media/plex/Library2"/>
+# <Location id="3" path="/media/plex/Library3"/>
+# <Location id="4" path="/media/plex/Library4"/>
 
-# Refresh Plex Library - Partial Scan 
+# Refresh Plex Library - Partial Scan
 echo Scanning Plex folder $folder
-echo curl -s http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
-curl -s http://192.168.1.35:32400/library/sections/3/refresh?X-Plex-Token=1d-zW73bAR1cSzEdpF9D
+
+case $folder in
+*/Library1*)
+  libno=1;;
+*/Library2*)
+  libno=2;;
+*/Library3*)
+  libno=3;;
+*/Library4*)
+  libno=4;;
+esac
+
+
+echo curl http://your.ip:32400/library/sections/$libno/refresh?X-Plex-Token=XXXXXXXXXXXXX
+curl http://your.ip:32400/library/sections/$libno/refresh?X-Plex-Token=XXXXXXXXXXXXX
